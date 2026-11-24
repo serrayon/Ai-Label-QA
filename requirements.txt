@@ -1,0 +1,4 @@
+anthropic>=0.40
+datasets>=2.19
+pandas>=2.0
+scikit-learn>=1.3

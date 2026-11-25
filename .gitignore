@@ -2,3 +2,4 @@ __pycache__/
 .env
 results/ai_labels_mock*.csv
 reports/report_mock*.md
+.venv/

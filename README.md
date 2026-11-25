@@ -32,29 +32,99 @@ _Fill this in after your runs._
 
 ## Run it yourself
 
-Requires Python 3.10+.
+No coding experience needed. Every command below is typed into a terminal: a window where you type commands instead of clicking. Copy each command, paste it into the terminal, and press Enter.
+
+### Step 1: Install Python (once)
+
+1. Go to [python.org/downloads](https://www.python.org/downloads/) and download the latest version (3.10 or newer).
+2. Run the installer. **On Windows, tick "Add python.exe to PATH" on the first screen** before you click Install.
+3. Check that it worked. Open a terminal:
+   - **Mac:** press Cmd+Space, type `Terminal`, press Enter.
+   - **Windows:** press the Windows key, type `PowerShell`, press Enter.
+
+   Then type `python3 --version` (Mac) or `python --version` (Windows). You should see something like `Python 3.13.1`.
+
+### Step 2: Get the project and open it in the terminal (once)
+
+1. On this GitHub page, click the green **Code** button, then **Download ZIP**. Unzip it (double-click on Mac; right-click and **Extract All** on Windows).
+2. In the terminal, go into the project folder. `cd` means "change folder":
+   - **Mac:** type `cd ` (with a space), drag the unzipped folder from Finder into the terminal window, and press Enter.
+   - **Windows:** open the unzipped folder in File Explorer, click the address bar, type `powershell`, and press Enter. A terminal opens already inside the folder.
+
+### Step 3: Install the requirements (once)
+
+This creates a private Python environment for the project (the `.venv` folder) so nothing on the rest of your computer is affected, then installs the four libraries listed in `requirements.txt`.
+
+**Mac:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows (PowerShell):**
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+When it works, your terminal line starts with `(.venv)`. If Windows says "running scripts is disabled", run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, answer `Y`, and try the activate line again.
+
+**Every time you come back** to the project, open a terminal in the folder (Step 2) and run only the activate line (`source .venv/bin/activate` on Mac, `.venv\Scripts\Activate.ps1` on Windows). Once `(.venv)` shows, the command `python` works on both Mac and Windows.
+
+### Step 4: Build the sample and audit it
 
 ```bash
-pip install -r requirements.txt
-
-# 1. Build the sample, then audit data/sample.csv by hand
 python prepare_data.py
+```
 
-# 2. Test the pipeline without an API key (fake labels)
+This downloads about 200 Spanish tweets and saves them to `data/sample.csv`. Open that file in Google Sheets (File, Import) or Excel. For each tweet, check `gold_label` against `guideline.md`. If you disagree, change it and write the reason in `gold_note`. Save it back as CSV: in Excel choose **CSV UTF-8**, in Google Sheets use **File, Download, CSV**. Ordinary CSV can garble accented letters like á and ñ.
+
+### Step 5: Test the pipeline without an API key (optional)
+
+```bash
 python label_with_claude.py --run mock --mock
 python evaluate.py --run mock
+```
 
-# 3. Real run with Claude (set ANTHROPIC_API_KEY first)
-python label_with_claude.py --run v1 --limit 10   # try 10 first
-python label_with_claude.py --run v1              # then the rest
+This uses fake labels, so the numbers mean nothing. It just proves everything runs. Open `reports/report_mock.md` to see what a report looks like.
+
+### Step 6: Label with Claude
+
+1. Create an API key at [console.anthropic.com](https://console.anthropic.com) (you need to add a few dollars of credit). Never share the key or put it in a file you upload.
+2. Give the key to this terminal window (replace `sk-ant-...` with your key):
+   - **Mac:** `export ANTHROPIC_API_KEY="sk-ant-..."`
+   - **Windows:** `$env:ANTHROPIC_API_KEY="sk-ant-..."`
+
+   This lasts until you close the window, so repeat it each session.
+3. Run it, trying 10 tweets first:
+```bash
+python label_with_claude.py --run v1 --limit 10
+python label_with_claude.py --run v1
 python evaluate.py --run v1
+```
 
-# 4. After improving the guideline
+Your report is `reports/report_v1.md`. A full run with Claude Haiku costs a few cents. If it stops partway, run the same command again; it picks up where it left off.
+
+### Step 7: Improve the guideline and measure again
+
+Review the disagreements at the bottom of the report. Copy `guideline.md` to `guideline_v2.md`, add rules for the mistakes you saw, then:
+
+```bash
 python label_with_claude.py --run v2 --guideline guideline_v2.md
 python evaluate.py --run v2 --compare v1
 ```
 
-Reports are written to `reports/`. A full 200-tweet run with Claude Haiku costs a few cents.
+### If something goes wrong
+
+| Message | Fix |
+|---|---|
+| `python: command not found` or `python3: command not found` | Python isn't installed or wasn't added to PATH. Reinstall it (on Windows, tick "Add python.exe to PATH"), then open a new terminal. |
+| `No module named pandas` (or anthropic, datasets, sklearn) | The environment isn't active. Run the activate line from Step 3 and look for `(.venv)`. |
+| `No such file or directory: data/sample.csv` | You're in the wrong folder, or you haven't done Step 4. Go back to Step 2. |
+| `Set ANTHROPIC_API_KEY first` | Do Step 6.2 again in this terminal window. |
+| Accented letters look like `Ã±` | Re-save the CSV as UTF-8 (Step 4). |
 
 ## Skills shown
 

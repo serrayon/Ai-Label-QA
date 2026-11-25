@@ -35,9 +35,10 @@ def main():
 
     # Balanced-ish sample: roughly equal counts of each label, so every class gets tested
     per_class = max(1, args.n // 3)
+    # (a plain loop instead of groupby().apply, which drops the label column in pandas 3)
     sample = (
-        df.groupby("original_label", group_keys=False)
-        .apply(lambda g: g.sample(min(len(g), per_class), random_state=args.seed))
+        pd.concat([g.sample(min(len(g), per_class), random_state=args.seed)
+                   for _, g in df.groupby("original_label")])
         .sample(frac=1, random_state=args.seed)  # shuffle
         .reset_index(drop=True)
     )
